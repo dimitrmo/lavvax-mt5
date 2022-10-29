@@ -29,27 +29,37 @@ struct MT5HistoricalPosition {
     double     open;
     datetime   time;
     long       volume;
-};    
+};
+
+enum LavvaxGatewayProtocol {
+   HTTP = 1,
+   WebSocket = 2,
+   MQTT = 4
+};
 
 #import "lavvax_metatrader.dll"
-   int gw_connect(uchar&[], int);
-   int gw_send_tick(uchar&[], int, MT5Tick &t);
-   int gw_send_historical(uchar&[], int, MT5HistoricalPosition &h);
+   int gw_connect(uchar&[], int, int);
+   int gw_send_tick(int, uchar&[], int, MT5Tick&);
+   int gw_send_historical(uchar&[], int, MT5HistoricalPosition&);
 #import
 
 class LavvaxGatewayPublisher {
 public:
-   void LavvaxGatewayPublisher(string, int);
+   void LavvaxGatewayPublisher(string, LavvaxGatewayProtocol, int);
    int Connect();
    int SendTick();
    int SendHistorical(int);
 private:
-   string   m_endpoint;
-   char     m_endpoint_raw[];
-   int      m_endpoint_len;
+   int      m_conn_x;
+
+   string   m_hostname;
+   char     m_hostname_raw[];
+   int      m_hostname_len;
 
    int      m_history_size;
    int      m_period;
+   
+   LavvaxGatewayProtocol   m_protocol;
    
    string   m_symbol;
    char     m_symbol_raw[];
@@ -58,19 +68,26 @@ private:
    MqlTick  m_last_tick;
 };
 
-void LavvaxGatewayPublisher::LavvaxGatewayPublisher(string ep, int hs) {
-   m_endpoint = ep;
-   StringToCharArray(m_endpoint, m_endpoint_raw);
-   m_endpoint_len = ArraySize(m_endpoint_raw);   
+void LavvaxGatewayPublisher::LavvaxGatewayPublisher(string hn, LavvaxGatewayProtocol proto, int hs) {   
    m_history_size = hs;
-   m_period = Period();   
-   m_symbol = Symbol();
-   StringToCharArray(m_symbol, m_symbol_raw);
+   m_period = Period();
+   
+   m_hostname = hn;
+   m_hostname_len = StringLen(m_hostname);
+   StringToCharArray(m_hostname, m_hostname_raw, 0, m_hostname_len, CP_UTF8);
+   
+   m_protocol = proto;
+   
+   m_symbol = Symbol();   
    m_symbol_len = ArraySize(m_symbol_raw);
+   StringToCharArray(m_symbol, m_symbol_raw, 0, m_symbol_len, CP_UTF8);
 }
 
 int LavvaxGatewayPublisher::Connect() {
-   return gw_connect(m_endpoint_raw, m_endpoint_len);
+   Print("hostname=", CharArrayToString(m_hostname_raw, 0, m_hostname_len, CP_UTF8));
+   Print("hostname_len=", m_hostname_len);
+   m_conn_x = gw_connect(m_hostname_raw, m_hostname_len, m_protocol);
+   return m_conn_x;
 }
 
 int LavvaxGatewayPublisher::SendTick() {
@@ -86,7 +103,7 @@ int LavvaxGatewayPublisher::SendTick() {
             m_last_tick.volume_real
         };
 
-        return gw_send_tick(m_symbol_raw, m_symbol_len, t);
+        return gw_send_tick(m_conn_x, m_symbol_raw, m_symbol_len, t);
     }
 
     return -1;

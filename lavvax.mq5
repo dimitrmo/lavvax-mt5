@@ -15,9 +15,11 @@
 //| Inputs                                                           |
 //+------------------------------------------------------------------+
 
-input string endpoint;
+input string hostname = "b85b0a17eb9c.apps.anadyme.com"; // Connect hostname.
 
-input int history_size = 30;  // last 30 entries
+input LavvaxGatewayProtocol protocol = WebSocket; // Connection protocol.
+
+input int history_size = 30;  // Last 30 history entries
 
 //+------------------------------------------------------------------+
 //| Global variables                                                 |
@@ -31,7 +33,9 @@ LavvaxGatewayPublisher *pub;
 int OnInit()
   {
    EventSetTimer(30);
-   pub = new LavvaxGatewayPublisher(endpoint, history_size);
+   pub = new LavvaxGatewayPublisher(hostname, protocol, history_size);
+   int result = pub.Connect();
+   Print("connection result=", result);
    OnTick();
    return(INIT_SUCCEEDED);
   }
@@ -43,9 +47,10 @@ int OnInit()
 void OnTick()
   {
    int written = pub.SendTick();
-   Print("tick written=", written);
-   written = pub.SendHistorical(0);
-   Print("historical=", written);
+   // Print("tick written=", written);
+   // written = pub.SendHistorical(0);
+   // Print("historical=", written);
+   Print("sending ticks result=", written);
   }
 
 //+------------------------------------------------------------------+
