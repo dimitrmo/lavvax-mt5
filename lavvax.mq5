@@ -39,7 +39,7 @@ int OnInit()
    int result = pub.Connect();
    Print(">> connection result ", result);
    
-   for(int i = history_size; i>=0; i--)
+   for(int i = history_size; i>=1; i--)
     {
         result = pub.SendHistorical(i);
         Print(">> historical result[", i, "] ", result);
