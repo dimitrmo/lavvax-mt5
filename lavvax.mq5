@@ -32,14 +32,23 @@ LavvaxGatewayPublisher *pub;
 //+------------------------------------------------------------------+
 int OnInit()
   {
-   EventSetTimer(30);
+   EventSetTimer(1);
+   
    pub = new LavvaxGatewayPublisher(hostname, protocol, history_size);
+   
    int result = pub.Connect();
-   Print("connection result=", result);
+   Print(">> connection result ", result);
+   
+   for(int i = history_size; i>=1; i--)
+    {
+        result = pub.SendHistorical(i);
+        Print(">> historical result[", i, "] ", result);
+    }
+   
    OnTick();
+   
    return(INIT_SUCCEEDED);
   }
-//+------------------------------------------------------------------+
 
 //+------------------------------------------------------------------+
 //| Expert tick function                                             |
@@ -47,10 +56,16 @@ int OnInit()
 void OnTick()
   {
    int written = pub.SendTick();
-   // Print("tick written=", written);
-   // written = pub.SendHistorical(0);
-   // Print("historical=", written);
-   Print("sending ticks result=", written);
+   Print(">> sending ticks result ", written);
+  }
+
+//+------------------------------------------------------------------+
+//| Expert ticker                                                    |
+//+------------------------------------------------------------------+
+void OnTimer(void)
+  {
+    int result = pub.SendPing();
+    Print(">> ping result ", result);
   }
 
 //+------------------------------------------------------------------+
@@ -59,5 +74,8 @@ void OnTick()
 void OnDeinit(const int reason)
   {
    EventKillTimer();
+   Print(">> deinit reason ", reason);
+   int result = pub.Disconnect();
+   Print(">> disconnect result ", result);
   }
 //+------------------------------------------------------------------+
