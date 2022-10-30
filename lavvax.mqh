@@ -39,7 +39,9 @@ enum LavvaxGatewayProtocol {
    MQTT = 4
 };
 
+#ifdef __MQL5__
 #import "lavvax_metatrader.dll"
+#endif
    int gw_connect(uchar&[], int, int);
    int gw_disconnect(int);
    int gw_send_ping(int);
@@ -54,7 +56,9 @@ public:
    int Disconnect();
    int SendPing();
    int SendTick();
-   int SendHistorical(int, ENUM_TIMEFRAMES);
+   MT5Tick PrepareTick();
+   int SendHistorical(int);   
+   MT5HistoricalPosition GetHistoricalAt(int);
 private:
    int      m_conn_x;
 
@@ -71,7 +75,8 @@ private:
    char     m_symbol_raw[];
    int      m_symbol_len;
    
-   MqlTick  m_last_tick;
+   MqlTick               m_last_tick;
+   MT5HistoricalPosition m_last_historical;
 };
 
 void LavvaxGatewayPublisher::LavvaxGatewayPublisher(string hn, LavvaxGatewayProtocol proto, int hs) {   
@@ -87,6 +92,9 @@ void LavvaxGatewayPublisher::LavvaxGatewayPublisher(string hn, LavvaxGatewayProt
    m_symbol = Symbol();   
    m_symbol_len = ArraySize(m_symbol_raw);
    StringToCharArray(m_symbol, m_symbol_raw, 0, m_symbol_len, CP_UTF8);
+   
+   SymbolInfoTick(m_symbol, m_last_tick);
+   m_last_historical = GetHistoricalAt(1);
 }
 
 int LavvaxGatewayPublisher::Connect() {
@@ -104,36 +112,46 @@ int LavvaxGatewayPublisher::SendPing() {
 
 int LavvaxGatewayPublisher::SendTick() {
     if (SymbolInfoTick(m_symbol, m_last_tick)) {
-        MT5Tick t = {
-            m_last_tick.time,
-            m_last_tick.bid,
-            m_last_tick.ask,
-            m_last_tick.last,
-            m_last_tick.volume,
-            m_last_tick.time_msc,
-            m_last_tick.flags,
-            m_last_tick.volume_real,
-            Digits(),
-        };
-
+        MT5Tick t = PrepareTick();
         return gw_send_tick(m_conn_x, m_symbol_raw, m_symbol_len, t);
     }
 
     return -1;
 }
 
-int LavvaxGatewayPublisher::SendHistorical(int shift, ENUM_TIMEFRAMES timeframe = PERIOD_CURRENT) {
+MT5Tick LavvaxGatewayPublisher::PrepareTick() {
+   MT5Tick t = {
+      m_last_tick.time,
+      m_last_tick.bid,
+      m_last_tick.ask,
+      m_last_tick.last,
+      m_last_tick.volume,
+      m_last_tick.time_msc,
+      m_last_tick.flags,
+      m_last_tick.volume_real,
+      Digits(),
+   };
+   
+   return t;
+}
+
+MT5HistoricalPosition LavvaxGatewayPublisher::GetHistoricalAt(int shift) {
     MT5HistoricalPosition h = {
         m_period,
-        iBars(m_symbol, timeframe),
-        iClose(m_symbol, timeframe, shift),
-        iHigh(m_symbol, timeframe, shift),
-        iLow(m_symbol, timeframe, shift),
-        iOpen(m_symbol, timeframe, shift),
-        iTime(m_symbol, timeframe, shift),
-        iVolume(m_symbol, timeframe, shift),
+        iBars(m_symbol, PERIOD_CURRENT),
+        iClose(m_symbol, PERIOD_CURRENT, shift),
+        iHigh(m_symbol, PERIOD_CURRENT, shift),
+        iLow(m_symbol, PERIOD_CURRENT, shift),
+        iOpen(m_symbol, PERIOD_CURRENT, shift),
+        iTime(m_symbol, PERIOD_CURRENT, shift),
+        iVolume(m_symbol, PERIOD_CURRENT, shift),
         Digits(),
     };
+    
+    return h;
+}
 
-    return gw_send_historical(m_conn_x, m_symbol_raw, m_symbol_len, h);
+int LavvaxGatewayPublisher::SendHistorical(int shift) {
+    m_last_historical = GetHistoricalAt(shift);
+    return gw_send_historical(m_conn_x, m_symbol_raw, m_symbol_len, m_last_historical);
 }

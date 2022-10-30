@@ -32,14 +32,14 @@ LavvaxGatewayPublisher *pub;
 //+------------------------------------------------------------------+
 int OnInit()
   {
-   EventSetTimer(1);
+   EventSetTimer(15);
    
    pub = new LavvaxGatewayPublisher(hostname, protocol, history_size);
    
    int result = pub.Connect();
    Print(">> connection result ", result);
    
-   for(int i = history_size; i>=1; i--)
+   for(int i = history_size; i>=0; i--)
     {
         result = pub.SendHistorical(i);
         Print(">> historical result[", i, "] ", result);
@@ -55,6 +55,14 @@ int OnInit()
 //+------------------------------------------------------------------+
 void OnTick()
   {
+   MT5HistoricalPosition pos1 = pub.GetHistoricalAt(1);
+   MT5Tick tick = pub.PrepareTick();
+   
+   if (pos1.time == tick.time) {
+      int result = pub.SendHistorical(1);
+      Print(">> historical send result ", result);
+   }
+   
    int written = pub.SendTick();
    Print(">> sending ticks result ", written);
   }
