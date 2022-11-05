@@ -55,16 +55,30 @@ int OnInit()
 //+------------------------------------------------------------------+
 void OnTick()
   {
-   MT5HistoricalPosition pos1 = pub.GetHistoricalAt(1);
-   MT5Tick tick = pub.PrepareTick();
-   
-   if (pos1.time == tick.time) {
-      int result = pub.SendHistorical(1);
-      Print(">> historical send result ", result);
+   int result = pub.SendHistorical(1);
+   Print(">> historical send result ", result);
+   if (result < 0) {
+      Print(">> reconnecting due to previous negative result ", result);
+      result = pub.Disconnect();
+      Print(">> disconnect result ", result);
+      result = pub.Connect();
+      Print(">> reconnect result ", result);
+      Sleep(1000);
+      OnTick();
+      return;
    }
    
-   int written = pub.SendTick();
-   Print(">> sending ticks result ", written);
+   result = pub.SendTick();
+   Print(">> sending ticks result ", result);
+   if (result < 0) {
+      Print(">> reconnecting due to previous negative result ", result);
+      result = pub.Disconnect();
+      Print(">> disconnect result ", result);
+      result = pub.Connect();
+      Print(">> reconnect result ", result);
+      Sleep(1000);
+      OnTick();
+   }
   }
 
 //+------------------------------------------------------------------+
@@ -74,6 +88,14 @@ void OnTimer(void)
   {
     int result = pub.SendPing();
     Print(">> ping result ", result);
+    if (result < 0) {
+       Print(">> reconnecting due to previous negative result ", result);
+       result = pub.Disconnect();
+       Print(">> disconnect result ", result);
+       result = pub.Connect();
+       Print(">> reconnect result ", result);
+       Sleep(1000);
+    }
   }
 
 //+------------------------------------------------------------------+
