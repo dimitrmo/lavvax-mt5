@@ -56,7 +56,7 @@ int OnInit()
 void OnTick()
   {
    int result = pub.SendHistorical(1);
-   Print(">> historical send result ", result);
+   // Print(">> historical send result ", result);
    if (result < 0) {
       Print(">> reconnecting due to previous negative result ", result);
       result = pub.Disconnect();
@@ -69,7 +69,7 @@ void OnTick()
    }
    
    result = pub.SendTick();
-   Print(">> sending ticks result ", result);
+   // Print(">> sending ticks result ", result);
    if (result < 0) {
       Print(">> reconnecting due to previous negative result ", result);
       result = pub.Disconnect();

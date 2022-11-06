@@ -39,9 +39,7 @@ enum LavvaxGatewayProtocol {
    MQTT = 4
 };
 
-#ifdef __MQL5__
 #import "lavvax_metatrader.dll"
-#endif
    int gw_connect(uchar&[], int, int);
    int gw_disconnect(int);
    int gw_send_ping(int);
