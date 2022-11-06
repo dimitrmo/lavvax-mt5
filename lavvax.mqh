@@ -6,7 +6,7 @@
 
 #property copyright "Copyright 2022, Anadyme Ltd"
 #property link      "https://www.anadyme.com"
-#property version   "1.11"
+#property version   "1.12"
 #property strict
 
 struct MT5Tick {
