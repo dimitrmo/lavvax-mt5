@@ -87,8 +87,8 @@ void LavvaxGatewayPublisher::LavvaxGatewayPublisher(string hn, LavvaxGatewayProt
    
    m_protocol = proto;
    
-   m_symbol = Symbol();   
-   m_symbol_len = ArraySize(m_symbol_raw);
+   m_symbol = Symbol();
+   m_symbol_len = StringLen(m_symbol);
    StringToCharArray(m_symbol, m_symbol_raw, 0, m_symbol_len, CP_UTF8);
    
    SymbolInfoTick(m_symbol, m_last_tick);
